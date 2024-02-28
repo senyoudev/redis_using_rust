@@ -28,6 +28,9 @@ fn main() {
 
 fn handle_client(mut _stream: TcpStream) {
 
+    // maybe we can get more than one command
+
+    loop {
         match _stream.write_all(b"+PONG\r\n") {
             Ok(_) => {
                 println!("PONG sent");
@@ -35,6 +38,8 @@ fn handle_client(mut _stream: TcpStream) {
             Err(e) => {
                 println!("error: {}", e);
             }
+        }
+    }
 
-}
+       
 }
