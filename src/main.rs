@@ -1,4 +1,6 @@
 use std::net::TcpListener;
+use std::net::TcpStream;
+use std::io::{Read, Write};
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -12,7 +14,8 @@ fn main() {
         match stream {
             // If everything goes well, print the below message
             Ok(_stream) => {
-                println!("accepted new connection");
+                // Here we should process the stream
+                handle_client(_stream);
             }
             // If there is an error, print the error message
             Err(e) => {
@@ -20,4 +23,19 @@ fn main() {
             }
         }
     }
+}
+
+
+fn handle_client(mut _stream: TcpStream) {
+    let mut buffer = [0;512];
+    _stream.read(&mut buffer).expect("Failed to read data from the stream");
+
+    let command = String::from_utf8_lossy(&buffer[..]); // Convert the buffer to a string
+
+    if command.starts_with("PING\r\n") { // \r means carriage return and \n means newline
+        _stream.write_all(b"+PONG\r\n").expect("Failed to write data to the stream");
+    } else {
+        _stream.write_all(b"-ERR unknown command\r\n").expect("Failed to write data to the stream");
+    }
+
 }
