@@ -27,12 +27,14 @@ fn main() {
 
 
 fn handle_client(mut _stream: TcpStream) {
-    let command = String::from_utf8_lossy(&buffer[..]); // Convert the buffer to a string
 
-    if command.starts_with("ping\r\n") { // \r means carriage return and \n means newline
-        _stream.write_all(b"+PONG\r\n").expect("Failed to write data to the stream");
-    } else {
-        _stream.write_all(b"-ERR unknown command\r\n").expect("Failed to write data to the stream");
-    }
+        match _stream.write_all(b"+PONG\r\n") {
+            Ok(_) => {
+                println!("PONG sent");
+            }
+            Err(e) => {
+                println!("error: {}", e);
+            }
 
+}
 }
