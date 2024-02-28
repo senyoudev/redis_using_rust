@@ -27,9 +27,6 @@ fn main() {
 
 
 fn handle_client(mut _stream: TcpStream) {
-    let mut buffer = [0;512];
-    _stream.read(&mut buffer).expect("Failed to read data from the stream");
-
     let command = String::from_utf8_lossy(&buffer[..]); // Convert the buffer to a string
 
     if command.starts_with("ping\r\n") { // \r means carriage return and \n means newline
