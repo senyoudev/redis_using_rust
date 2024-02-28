@@ -1,6 +1,6 @@
 use std::net::TcpListener;
 use std::net::TcpStream;
-use std::io::Write;
+use std::io::{Read, Write};
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -31,8 +31,14 @@ fn handle_client(mut _stream: TcpStream) {
     // maybe we can get more than one command
 
     loop {
-        match _stream.write_all(b"+PONG\r\n") {
+        let mut buffer = [0u8;512];
+        match _stream.read(&mut buffer) {
+            Ok(0) => {
+                println!("0 bytes written");
+                break;
+            }
             Ok(_) => {
+                _stream.write_all("PONG\r\n".as_bytes()).unwrap();
                 println!("PONG sent");
             }
             Err(e) => {
