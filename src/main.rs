@@ -1,6 +1,7 @@
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::io::{Read, Write};
+use std::thread::spawn;
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -15,7 +16,9 @@ fn main() {
             // If everything goes well, print the below message
             Ok(_stream) => {
                 // Here we should process the stream
-                handle_client(_stream);
+                spawn(|| {
+                    handle_client(_stream)
+                });
             }
             // If there is an error, print the error message
             Err(e) => {
