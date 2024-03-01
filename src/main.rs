@@ -3,18 +3,16 @@ use std::net::TcpStream;
 use std::io::{Read, Write};
 use std::string;
 use std::thread::spawn;
+use std::collections::HashMap;
 
-// an enum for commands 
-pub enum RedisCommand {
-    Command,
-    Echo,
-    Ping
-}
+
+
+
 
 fn main() {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    println!("Logs from your program will appear here!");
-
+    // we define a key-value data structure to store and retrieve the items (SET-GET) => we use a hashmap
+    let mut data_store : HashMap<String, String> = HashMap::new();    
+ 
     // Create a TCP listener and bind it to the address
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
     
@@ -23,9 +21,10 @@ fn main() {
         match stream {
             // If everything goes well, print the below message
             Ok(_stream) => {
+                let data_store_clone = data_store.clone();
                 // Here we should process the stream
                 spawn(|| {
-                    handle_client(_stream)
+                    handle_client(_stream, data_store_clone);
                 });
             }
             // If there is an error, print the error message
@@ -37,7 +36,7 @@ fn main() {
 }
 
 
-fn handle_client(mut _stream: TcpStream) {
+fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, String>) {
 
     // now we implement a proper redis protocol
 
@@ -59,7 +58,7 @@ fn handle_client(mut _stream: TcpStream) {
                 // and the first element is "*3" and the second is "$4" and the third is the command
                 match command_to_be_passed {
                     "ping" => {
-                        let res = format!("{}{}", "+PONG", separator);
+                        let res = format!("{}{}", "+PONG", separator); // res is +PONG\r\n
                         println!("ping command response: {:?}", res);
                         _stream
                             .write_all(res.as_bytes())
@@ -69,12 +68,43 @@ fn handle_client(mut _stream: TcpStream) {
                         let res = format!(
                             "{}{}{}{}",
                             command_raw_vec[3], separator, command_raw_vec[4], separator
-                        );
+                        ); // res is raw[3]/r/nraw[4]/r/n which is 5Hello\r\n
                         println!("echo command respnse: {:?}", res);
                         _stream
                             .write_all(res.as_bytes())
                             .expect("Failed to write respnse");
                     }
+                    "set" => {
+                        // the command will be like : *3\r\n$3\r\nset\r\n$3\r\nkey\r\n$5\r\nvalue\r\n so the key will be in position 4 and the value will be in position 6
+                        let key = command_raw_vec[4];
+                        let value = command_raw_vec[6];
+                        data_store.insert(key.to_string(), value.to_string());
+                        let res = format!("{}{}", "+OK", separator); // res is +OK\r\n
+                        println!("set command response: {:?}", res);
+                        _stream
+                            .write_all(res.as_bytes())
+                            .expect("Failed to write response");
+                    }
+                    "get" => {
+                        // the command will be like : *2\r\n$3\r\nget\r\n$3\r\nkey\r\n so the key will be in position 4
+                        let key = command_raw_vec[4];
+                        //check if the key exists in the data store
+                        if let Some(value) = data_store.get(key) {
+                            let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
+                            println!("get command response: {:?}", res);
+                            _stream
+                                .write_all(res.as_bytes())
+                                .expect("Failed to write response");
+                        } else {
+                            let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
+                            println!("get command response: {:?}", res);
+                            _stream
+                                .write_all(res.as_bytes())
+                                .expect("Failed to write response");
+                        }
+                        
+                    }
+
                     _ => {
                         println!("Undefined command");
                     }
