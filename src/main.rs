@@ -41,8 +41,9 @@ fn handle_client(mut _stream: TcpStream) {
     // now we implement a proper redis protocol
 
     // read the command from the client
+    let mut buffer = [0u8;512];
+    let separator = "\r\n";
     loop {
-        let mut buffer = [0u8;512];
         match _stream.read(&mut buffer) {
             Ok(0) => {
                 println!("Connection Closed");
@@ -98,10 +99,9 @@ fn execute_redis_command(command:RedisCommand, stream: &mut TcpStream)  {
             // Handle Ping command logic here
             stream.write_all(b"+mango\r\n").unwrap(); // Placeholder response
         }
-        RedisCommand::Command => {
-            println!("Command command parsed");
-            // Handle Command command logic here
-            stream.write_all(b"+PONG\r\n").unwrap(); // Placeholder response
+        _ => {
+            // Handle other commands here
+            stream.write_all("Undefined command".as_bytes()).unwrap();
         }
         // Add more variants as needed
     }
