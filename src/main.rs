@@ -1,6 +1,7 @@
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::io::{Read, Write};
+use std::string;
 use std::thread::spawn;
 
 // an enum for commands 
@@ -52,14 +53,32 @@ fn handle_client(mut _stream: TcpStream) {
             Ok(_) => {
                 // Here the magic should be done
                 let command = String::from_utf8_lossy(&buffer);
-                if let Some(command_redis) = parse_redis_command(&command) {
-                    println!("Command parsed");
-                    execute_redis_command(command_redis, &mut _stream);
-                } else {
-                    println!("Invalid Command");
-
+                let command_str = command.to_string();
+                let command_raw_vec : Vec<&str> = command_str.split(separator).collect();
+                let command_to_be_passed = command_raw_vec[2]; //  why 2 ? because the format of the command is "*3\r\n$4\r\nECHO\r\n$5\r\nHello\r\n"
+                // and the first element is "*3" and the second is "$4" and the third is the command
+                match command_to_be_passed {
+                    "ping" => {
+                        let res = format!("{}{}", "+PONG", separator);
+                        println!("ping command response: {:?}", res);
+                        _stream
+                            .write_all(res.as_bytes())
+                            .expect("Failed to write respnse");
+                    }
+                    "echo" => {
+                        let res = format!(
+                            "{}{}{}{}",
+                            command_raw_vec[3], separator, command_raw_vec[4], separator
+                        );
+                        println!("echo command respnse: {:?}", res);
+                        _stream
+                            .write_all(res.as_bytes())
+                            .expect("Failed to write respnse");
+                    }
+                    _ => {
+                        println!("Undefined command");
+                    }
                 }
-                _stream.write_all("+PONG\r\n".as_bytes()).unwrap();
                 println!("PONG sent");
             }
             Err(e) => {
@@ -72,38 +91,4 @@ fn handle_client(mut _stream: TcpStream) {
 }
 
 
-fn parse_redis_command(command_str: &str) -> Option<RedisCommand> {
-    if let Some(index) = command_str.find('\n') {
-        let command = &command_str[1..index].to_lowercase(); // Convert to lowercase for case insensitivity
-        let command_string = command.to_string();
-        match command_string.as_str() {
-            "echo" => Some(RedisCommand::Echo),
-            "ping" => Some(RedisCommand::Ping),
-            // Add more commands as needed
-            _ => None,
-        }
-    } else {
-        None
-    }
-}
-
-fn execute_redis_command(command:RedisCommand, stream: &mut TcpStream)  {
-    match command {
-        RedisCommand::Echo => {
-            println!("Echo command parsed");
-            // Handle Echo command logic here
-            stream.write_all(b"+PONG\r\n").unwrap(); // Placeholder response
-        }
-        RedisCommand::Ping => {
-            println!("Ping command parsed");
-            // Handle Ping command logic here
-            stream.write_all(b"+mango\r\n").unwrap(); // Placeholder response
-        }
-        _ => {
-            // Handle other commands here
-            stream.write_all("Undefined command".as_bytes()).unwrap();
-        }
-        // Add more variants as needed
-    }
-}
 
