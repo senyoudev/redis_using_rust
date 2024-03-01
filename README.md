@@ -166,3 +166,151 @@ There are some limitations to this server:
    - It can only handle one client at a time.
    - It reads a fixed-size buffer from the client, and writes the same buffer back to the client.
    - It doesn't handle errors gracefully.For example, if a client disconnects abruptly, the server will panic.
+
+
+
+## Redis Protocol
+
+RESP is the protocol used by Redis. It is a simple protocol that is easy to implement and parse. It is also human-readable, which makes it easy to debug.it supports several data types, including strings, integers, arrays, and errors.
+
+We can categorize RESP data types as either **simple**, **bulk**, or **aggregate**.
+
+### Simple Strings
+
+Simple strings are used to represent text data. They are prefixed with a '+' character, and are terminated with a CRLF (Carriage Return Line Feed) sequence.
+
+For example, the string "OK" is represented as:
+
+```rust
++OK\r\n
+```
+
+### Simple Errors
+
+Simple errors are used to represent error messages. They are prefixed with a '-' character, and are terminated with a CRLF sequence.
+
+For example, the error message "ERR operation not permitted" is represented as:
+
+```rust
+-ERR operation not permitted\r\n
+```
+
+### Integers
+
+Integers are used to represent whole numbers. They are prefixed with a ':' character, and are terminated with a CRLF sequence.
+
+For example, the number 1000 is represented as:
+
+```rust
+:1000\r\n
+```
+
+### Bulk Strings
+
+Bulk strings are used to represent binary data. They are prefixed with a '$' character, followed by the length of the string in bytes, and are terminated with a CRLF sequence.
+
+For example, the string "foobar" is represented as:
+
+```rust
+$6\r\nfoobar\r\n
+```
+
+### Arrays
+
+Arrays are used to represent a collection of RESP data types. They are prefixed with a '*' character, followed by the number of elements in the array, and are terminated with a CRLF sequence.
+
+For example, the array ["foo", "bar", "baz"] is represented as:
+
+```rust
+*3\r\n$3\r\nfoo\r\n$3\r\nbar\r\n$3\r\nbaz\r\n
+```
+
+### Null Bulk Strings
+
+Null bulk strings are used to represent a null value. They are represented as:
+
+```rust
+$-1\r\n
+```
+
+### Null Arrays
+
+Null arrays are used to represent a null array. They are represented as:
+
+```rust
+*-1\r\n
+```
+
+The difference between `Null Bulk Strings` and `Null Arrays` is that `Null Bulk Strings` are used to represent a null value, while `Null Arrays` are used to represent a null array. For example, if a command returns a null value, it will be represented as a `Null Bulk String`. If a command returns a null array, it will be represented as a `Null Array`.
+
+### Null Elements in Arrays
+
+Arrays can contain null elements. For example, the array ["foo", null, "baz"] is represented as:
+
+```rust
+*3\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbaz\r\n
+```
+
+### Nulls
+
+Nulls' encoding is the underscore (_) character, followed by the CRLF terminator (\r\n). Here's Null's raw RESP encoding:
+
+```rust
+$_\r\n
+```
+
+### Boolean
+
+Boolean's encoding is the `#` character, followed by the value `t` for true or `f` for false, and the CRLF terminator (\r\n). Here's Boolean's raw RESP encoding:
+
+```rust
+#t\r\n
+#f\r\n
+```
+
+### Double
+
+The Double RESP type encodes a double-precision floating point value. Doubles are encoded as follows:
+
+```rust
+,3.14\r\n
+```
+
+### Big numbers
+
+This type can encode integer values outside the range of signed 64-bit integers.
+
+Big numbers use the following encoding:
+
+```rust
+([+|-]<number>\r\n
+```
+
+For example, the number 3492890328409238509324850943850943825024385 is encoded as:
+
+```rust
+(3492890328409238509324850943850943825024385\r\n
+```
+
+There is many other types of RESP data types, but I think these are enough as a start.
+You can find the full list of RESP data types in the [official documentation](https://redis.io/docs/reference/protocol-spec/).
+
+## Client Handshake
+
+New RESP connections should begin the session by calling `HELLO` command. The client sends the `HELLO` command to the server, and the server responds with the supported version of the RESP protocol.
+
+## Sending Commands to a Redis Server
+
+We can use the RESP serialization format to write redis client library. We can further specify how the interaction between the client and the server works:
+
+- A client sends the Redis server an array consisting of only bulk strings.
+- A Redis server replies to clients, sending any valid RESP data type as a reply.
+
+Here's an example of how a client sends a command to the server:
+
+```rust
+*3\r\n$3\r\nSET\r\n$5\r\nmykey\r\n$7\r\nmyvalue\r\n
+```
+
+
+
