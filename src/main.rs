@@ -1,4 +1,3 @@
-use std::char::ToLowercase;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::io::{Read, Write};
@@ -52,9 +51,9 @@ fn handle_client(mut _stream: TcpStream) {
             Ok(_) => {
                 // Here the magic should be done
                 let command = String::from_utf8_lossy(&buffer);
-                if let Some(redisCommand) = parse_redis_command(&command) {
+                if let Some(command_redis) = parse_redis_command(&command) {
                     println!("Command parsed");
-                    execute_redis_command(redisCommand, &mut _stream);
+                    execute_redis_command(command_redis, &mut _stream);
                 } else {
                     println!("Invalid Command");
 
@@ -97,7 +96,7 @@ fn execute_redis_command(command:RedisCommand, stream: &mut TcpStream)  {
         RedisCommand::Ping => {
             println!("Ping command parsed");
             // Handle Ping command logic here
-            stream.write_all(b"+PONG\r\n").unwrap(); // Placeholder response
+            stream.write_all(b"+mango\r\n").unwrap(); // Placeholder response
         }
         RedisCommand::Command => {
             println!("Command command parsed");
