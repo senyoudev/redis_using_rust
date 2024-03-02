@@ -28,7 +28,9 @@ fn main() {
 
     if let Some(index) = args.iter().position(|arg| arg == "--replicaof") {
         is_master = false; // since it's replicaof, then it won't be the master
-
+        if !is_master {
+            print!("I am a slave and should do the handshake with the master");
+        }
         
     }
 
