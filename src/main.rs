@@ -134,6 +134,9 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         };
                         _stream.write_all(res.as_bytes()).expect("Failed to write response");
                     }
+                    "info" => {
+                        // the format of the command is like
+                    }
 
                     _ => {
                         println!("Undefined command");
