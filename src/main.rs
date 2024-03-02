@@ -139,9 +139,9 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                             Some((value, expiration_time)) => {
                                 if SystemTime::now() > *expiration_time {
                                     data_store.remove(&key.to_string());
-                                    format!("{}{}", "$-1", separator)
+                                    send_null_bulk_string()
                                 } else {
-                                    format!("${}{}{}{}", value.len(), separator, value, separator)
+                                    send_bulk_string(value.to_string())
                                 }
                             }
                             None => format!("{}{}", "$-1", separator),

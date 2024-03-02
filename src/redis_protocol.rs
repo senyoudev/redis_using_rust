@@ -7,5 +7,5 @@ pub fn send_bulk_string(response: String) -> String {
 }
 
 pub fn send_null_bulk_string() -> String {
-    "$-1\r\n".to_string()
+    format!("$-1\r\n")
 }
