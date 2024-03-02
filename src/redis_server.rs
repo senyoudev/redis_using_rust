@@ -18,7 +18,7 @@ pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (St
     let mut buffer = [0u8;512];
     let separator = "\r\n";
 
-  
+    
     
     loop {
         match _stream.read(&mut buffer) {
@@ -121,12 +121,7 @@ pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (St
                         println!("Undefined command");
                     }
                 }
-
-                if !is_master {
-                    let res = send_handshake_ping();
-                    _stream.write_all(res.as_bytes()).expect("Failed to write response");
-                }
-                
+           
             }
             Err(e) => {
                 println!("error: {}", e);

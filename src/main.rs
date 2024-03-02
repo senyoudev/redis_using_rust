@@ -1,12 +1,16 @@
 mod redis_protocol;
 mod redis_server;
 use std::env;
+use std::io::Write;
 use std::net::TcpListener;
 
 use std::thread::spawn;
 use std::collections::HashMap;
 use std::time::SystemTime;
 use redis_server::handle_client;
+use tokio::stream;
+
+use crate::redis_protocol::send_handshake_ping;
 
 
 
@@ -24,6 +28,8 @@ fn main() {
 
     if let Some(index) = args.iter().position(|arg| arg == "--replicaof") {
         is_master = false; // since it's replicaof, then it won't be the master
+
+        
     }
 
     if let Some(index) = args.iter().position(|arg| arg == "--port") {
@@ -42,11 +48,19 @@ fn main() {
     // Accept incoming connections
     for stream in listener.incoming() {
         match stream {
+            
             // If everything goes well, print the below message
-            Ok(_stream) => {
+            Ok(mut _stream) => {
+               
                 let data_store_clone = data_store.clone();
                 // Here we should process the stream
                 spawn(move || {
+                    if !is_master {
+                        let res = send_handshake_ping();
+                        _stream
+                            .write_all(res.as_bytes())
+                            .expect("Failed to write respnse");
+                    }
                     handle_client(_stream, data_store_clone,is_master);
                 });
             }
