@@ -144,7 +144,7 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                                     send_bulk_string(value.to_string())
                                 }
                             }
-                            None => format!("{}{}", "$-1", separator),
+                            None => send_null_bulk_string(),
                         };
                         _stream.write_all(res.as_bytes()).expect("Failed to write response");
                     }
