@@ -86,26 +86,23 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         let expiry_index = command_raw_vec.iter().position(|&x| x == "px");
                    
                         if let Some(index) = expiry_index {
+                            println!("Here is the index: {:?}", index);
                             if let Ok(expiry) = command_raw_vec[index + 1].parse::<u64>() {
                                 let expiry_duration = Duration::from_millis(expiry);
                                 let expiration_time = SystemTime::now() + expiry_duration;
                                 data_store.insert(key.to_string(), (value.to_string(),expiration_time));
-                                println!("The data store is: ");
-                                for (key, (value, expiration_time)) in &data_store {
-                                    println!("Key: {}, Value: {}, Expiration Time: {:?}", key, value, expiration_time);
-                                }
                             }
                             else {
                                 // No expiry provided, set expiration to max
                                 let expiration_time = SystemTime::now() + Duration::from_secs(365 * 24 * 60 * 60); // 1 year from now
                                 data_store.insert(key.to_string(), (value.to_string(), expiration_time));
-                                println!("The data store is: ");
-                                for (key, (value, expiration_time)) in &data_store {
-                                    println!("Key: {}, Value: {}, Expiration Time: {:?}", key, value, expiration_time);
-                                }
+                               
                            }
                         } 
-                        
+                        println!("The data store is: ");
+                        for (key, (value, expiration_time)) in &data_store {
+                            println!("Key: {}, Value: {}, Expiration Time: {:?}", key, value, expiration_time);
+                        }
                         let res = format!("{}{}", "+OK", separator); // res is +OK\r\n
                         println!("set command response: {:?}", res);
                         _stream
