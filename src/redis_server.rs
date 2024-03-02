@@ -18,10 +18,10 @@ pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (St
     let mut buffer = [0u8;512];
     let separator = "\r\n";
 
-    if !is_master {
-        let res = send_handshake_ping();
-        _stream.write_all(res.as_bytes()).expect("Failed to write response");
-    }
+    // if !is_master {
+    //     let res = send_handshake_ping();
+    //     _stream.write_all(res.as_bytes()).expect("Failed to write response");
+    // }
     
     loop {
         match _stream.read(&mut buffer) {
