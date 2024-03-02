@@ -108,6 +108,12 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                     "get" => {
                         // the command will be like : *2\r\n$3\r\nget\r\n$3\r\nkey\r\n so the key will be in position 4
                         let key = command_raw_vec[4];
+                        // let's print the whole hashmap
+                        
+                        for (key, (value, expiration_time)) in &data_store {
+                            println!("Key: {}, Value: {}, Expiration Time: {:?}", key, value, expiration_time);
+                        }
+                        
 
                         // retrieve the result of the key
                         println!("the value of the key is {:?}", data_store.get(&key.to_string()));
