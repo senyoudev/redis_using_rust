@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
+use std::time::Instant;
 
 
 
@@ -14,7 +15,7 @@ use std::time::UNIX_EPOCH;
 
 fn main() {
     // we define a key-value data structure to store and retrieve the items (SET-GET) => we use a hashmap
-    let mut data_store : HashMap<String, (String, Option<time::Duration>,Option<SystemTime>)> = HashMap::new();    
+    let mut data_store : HashMap<String, (String, Instant)> = HashMap::new();    
  
     // Create a TCP listener and bind it to the address
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
@@ -39,7 +40,7 @@ fn main() {
 }
 
 
-fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String, Option<Duration>,Option<SystemTime>)>) {
+fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String, Instant)>) {
 
     // now we implement a proper redis protocol
 
@@ -90,12 +91,15 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                             }
                         }
                         let set_time = SystemTime::now();
-                        data_store.insert(key.to_string(), (value.to_string(),expired_time,Some(set_time)));
-                        let res = format!("{}{}", "+OK", separator); // res is +OK\r\n
-                        println!("set command response: {:?}", res);
-                        _stream
-                            .write_all(res.as_bytes())
-                            .expect("Failed to write response");
+                        if let Some(expired) = expired_time {
+                            data_store.insert(key.to_string(), (value.to_string(),Instant::now() + expired_time.unwrap()));
+                            let res = format!("{}{}", "+OK", separator); // res is +OK\r\n
+                            println!("set command response: {:?}", res);
+                            _stream
+                                .write_all(res.as_bytes())
+                                .expect("Failed to write response");
+                        }
+                        
                     }
                     "get" => {
                         // the command will be like : *2\r\n$3\r\nget\r\n$3\r\nkey\r\n so the key will be in position 4
@@ -103,19 +107,18 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         //check if the key exists in the data store and it is not expired
 
 
-                        if let Some((value,expiry_duration,set_time)) = data_store.get(key) {
-                                let now = SystemTime::now();
-                                let time_in_which_should_be_expired = set_time.unwrap().duration_since(UNIX_EPOCH).unwrap() + expiry_duration.unwrap();
-
-                                if now.duration_since(UNIX_EPOCH).unwrap() > time_in_which_should_be_expired && Some(time_in_which_should_be_expired) != None {
+                        if let Some((value,duration)) = data_store.get(key) {
+                                if Instant::now() > *duration {
                                     data_store.remove(key);
-                                    let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
+                                    let res = format!("{}{}", "$-1", separator);
                                     println!("get command response: {:?}", res);
                                     _stream
                                         .write_all(res.as_bytes())
                                         .expect("Failed to write response");
                                     continue;
                                 }
+
+                               
                                 let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
                                  println!("get command response: {:?}", res);
                                 _stream
