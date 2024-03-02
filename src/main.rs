@@ -55,12 +55,6 @@ fn main() {
                 let data_store_clone = data_store.clone();
                 // Here we should process the stream
                 spawn(move || {
-                    if !is_master {
-                        let res = send_handshake_ping();
-                        _stream
-                            .write_all(res.as_bytes())
-                            .expect("Failed to write respnse");
-                    }
                     handle_client(_stream, data_store_clone,is_master);
                 });
             }

@@ -118,6 +118,18 @@ pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (St
                     
 
                     _ => {
+                        if !is_master {
+                            let res = send_handshake_ping();
+                            _stream
+                                .write_all(res.as_bytes())
+                                .expect("Failed to write respnse");
+                        } else {
+                            let res = send_simple_string("Undefined command");
+                            _stream
+                                .write_all(res.as_bytes())
+                                .expect("Failed to write respnse");
+                        
+                        }
                         println!("Undefined command");
                     }
                 }
