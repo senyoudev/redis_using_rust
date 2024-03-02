@@ -88,13 +88,14 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                                 let expiration_time = SystemTime::now() + expiry_duration;
                                 data_store.insert(key.to_string(), (value.to_string(),expiration_time));
                             }
-                            else {
-                                // No expiry provided, set expiration to max
-                                let expiration_time = SystemTime::now() + Duration::from_secs(365 * 24 * 60 * 60); // 1 year from now
-                                data_store.insert(key.to_string(), (value.to_string(), expiration_time));
-                               
-                           }
+                            
                         } 
+                        else {
+                            // No expiry provided, set expiration to max
+                            let expiration_time = SystemTime::now() + Duration::from_secs(365 * 24 * 60 * 60); // 1 year from now
+                            data_store.insert(key.to_string(), (value.to_string(), expiration_time));
+                           
+                       }
                         println!("The data store is: ");
                         for (key, (value, expiration_time)) in &data_store {
                             println!("Key: {}, Value: {}, Expiration Time: {:?}", key, value, expiration_time);
