@@ -136,25 +136,30 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                     }
                     "info" => {
                         // As a first observation, I think we will find replication in position 3
-                        if let Some(section) = command_raw_vec.get(3) {
-                            if *section == "replication" {
-                                let res = format!("$11\r\nrole:master\r\n");
-                                _stream
-                                    .write_all(res.as_bytes())
-                                    .expect("Failed to write response");
-                                println!("Response sent for replication {}", res);
-                            } else {
-                                let res = format!("$5\r\nerror\r\n");
-                                _stream
-                                    .write_all(res.as_bytes())
-                                    .expect("Failed to write response");
-                            }
-                        } else {
-                            let res = format!("$5\r\nerror\r\n");
+                            let res = format!("$11\r\nrole:master\r\n");
                             _stream
                                 .write_all(res.as_bytes())
                                 .expect("Failed to write response");
-                        }
+                            println!("Response sent for replication {}", res);
+                        // if let Some(section) = command_raw_vec.get(3) {
+                        //     if *section == "replication" {
+                        //         let res = format!("$11\r\nrole:master\r\n");
+                        //         _stream
+                        //             .write_all(res.as_bytes())
+                        //             .expect("Failed to write response");
+                        //         println!("Response sent for replication {}", res);
+                        //     } else {
+                        //         let res = format!("$5\r\nerror\r\n");
+                        //         _stream
+                        //             .write_all(res.as_bytes())
+                        //             .expect("Failed to write response");
+                        //     }
+                        // } else {
+                        //     let res = format!("$5\r\nerror\r\n");
+                        //     _stream
+                        //         .write_all(res.as_bytes())
+                        //         .expect("Failed to write response");
+                        // }
                     }
 
                     _ => {
