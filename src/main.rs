@@ -1,21 +1,17 @@
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::io::{Read, Write};
-use std::time;
 use std::thread::spawn;
 use std::collections::HashMap;
 use std::time::Duration;
 use std::time::SystemTime;
-use std::time::UNIX_EPOCH;
-use std::time::Instant;
-
 
 
 
 
 fn main() {
     // we define a key-value data structure to store and retrieve the items (SET-GET) => we use a hashmap
-    let mut data_store : HashMap<String, (String, SystemTime)> = HashMap::new();    
+    let  data_store : HashMap<String, (String, SystemTime)> = HashMap::new();    
  
     // Create a TCP listener and bind it to the address
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
@@ -84,7 +80,7 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         let key = command_raw_vec[4];
                         let value = command_raw_vec[6];
                         let expiry_index = command_raw_vec.iter().position(|&x| x == "px");
-                   
+                        println!("Here is the expiry index: {:?}", expiry_index);
                         if let Some(index) = expiry_index {
                             println!("Here is the index: {:?}", index);
                             if let Ok(expiry) = command_raw_vec[index + 1].parse::<u64>() {
