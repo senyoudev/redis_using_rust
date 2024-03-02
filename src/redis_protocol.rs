@@ -13,5 +13,5 @@ pub fn send_null_bulk_string() -> String {
 }
 
 pub fn send_handshake_ping() -> String {
-   format!("*1\r\n$4\r\nPING\r\n")
+   format!("*1\r\n$4\r\nping\r\n")
 }
