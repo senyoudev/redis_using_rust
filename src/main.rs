@@ -151,13 +151,12 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         _stream.write_all(res.as_bytes()).expect("Failed to write response");
                     }
                     "info" => {
-                        // As a first observation, I think we will find replication in position 3
                         if is_master {
                             let res = format!(
                                 "{}{}{}:{}{}{}:{}{}{}{}{}",
                                 "$11", separator, "role", "master", separator,
                                 "master_replid", "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb", separator,
-                                "master_repl_offset", "0",separator
+                                "master_repl_offset", "0", separator
                             );
                             println!("master response {}",res);
                             _stream.write_all(res.as_bytes()).expect("Failed to write response");
@@ -171,8 +170,8 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                             println!("replica response {}",res);
                             _stream.write_all(res.as_bytes()).expect("Failed to write response");
                         } 
-                    
                     }
+                    
 
                     _ => {
                         println!("Undefined command");
