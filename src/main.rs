@@ -157,7 +157,8 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                             println!("Sent from here and the res is {}",res);
                             _stream.write_all(res.as_bytes()).expect("Failed to write response");
                         } else {
-                            let res = format!("{}{}{}{}","$10",separator,"role:slave",separator);
+                            let res = format!("{}{}{}{}","$10",separator,"role:master",separator);
+
                             println!("Sent from here and the res is {}",res);
                             _stream.write_all(res.as_bytes()).expect("Failed to write response");
                             
