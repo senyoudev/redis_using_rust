@@ -120,7 +120,7 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
 
                                
                                 let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
-                                 println!("get command response: {:?}", res);
+                                println!("get command response: {:?}", res);
                                 _stream
                                     .write_all(res.as_bytes())
                                     .expect("Failed to write response");
