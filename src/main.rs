@@ -116,11 +116,12 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                                 _stream.write_all(res.as_bytes()).expect("Failed to write response");
                                 println!("get command response: {:?}", res);
                                 continue;
+                            } else {
+                                let res = format!("${}{}{}{}", value.len(), separator, value, separator);
+                                println!("get command response: {:?}", res);
+                                _stream.write_all(res.as_bytes()).expect("Failed to write response");
                             }
 
-                            let res = format!("${}{}{}{}", value.len(), separator, value, separator);
-                            println!("get command response: {:?}", res);
-                            _stream.write_all(res.as_bytes()).expect("Failed to write response");
                         } else {
                             let res = format!("{}{}", "$-1", separator);
                             _stream.write_all(res.as_bytes()).expect("Failed to write response");
