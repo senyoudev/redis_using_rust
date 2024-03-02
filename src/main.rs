@@ -15,7 +15,7 @@ use std::time::Instant;
 
 fn main() {
     // we define a key-value data structure to store and retrieve the items (SET-GET) => we use a hashmap
-    let mut data_store : HashMap<String, (String, Instant)> = HashMap::new();    
+    let mut data_store : HashMap<String, (String, SystemTime)> = HashMap::new();    
  
     // Create a TCP listener and bind it to the address
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
@@ -40,7 +40,7 @@ fn main() {
 }
 
 
-fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String, Instant)>) {
+fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String, SystemTime)>) {
 
     // now we implement a proper redis protocol
 
@@ -84,55 +84,72 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         let key = command_raw_vec[4];
                         let value = command_raw_vec[6];
                         let expiry_index = command_raw_vec.iter().position(|&x| x == "px");
-                        let mut expired_time : Option<Duration> = None;
+                        let mut expiration_time : Option<SystemTime> = None;
+                   
                         if let Some(index) = expiry_index {
                             if let Ok(expiry) = command_raw_vec[index + 1].parse::<u64>() {
-                                expired_time  = Some(Duration::from_millis(expiry));
+                                let expiry_duration = Duration::from_millis(expiry);
+                                let expiration_time = SystemTime::now() + expiry_duration;
+                                data_store.insert(key.to_string(), (value.to_string(),expiration_time));
                             }
+                        } else {
+                             // No expiry provided, set expiration to max
+                            let expiration_time = SystemTime::UNIX_EPOCH + Duration::from_secs(u64::MAX);
+                            data_store.insert(key.to_string(), (value.to_string(), expiration_time));
                         }
-                        let set_time = SystemTime::now();
-                        if let Some(expired) = expired_time {
-                            data_store.insert(key.to_string(), (value.to_string(),Instant::now() + expired_time.unwrap()));
-                            let res = format!("{}{}", "+OK", separator); // res is +OK\r\n
-                            println!("set command response: {:?}", res);
-                            _stream
-                                .write_all(res.as_bytes())
-                                .expect("Failed to write response");
-                        }
+
+                        let res = format!("{}{}", "+OK", separator); // res is +OK\r\n
+                        println!("set command response: {:?}", res);
+                        _stream
+                            .write_all(res.as_bytes())
+                            .expect("Failed to write response");
                         
                     }
                     "get" => {
                         // the command will be like : *2\r\n$3\r\nget\r\n$3\r\nkey\r\n so the key will be in position 4
                         let key = command_raw_vec[4];
                         //check if the key exists in the data store and it is not expired
+                        if let Some((value, expiration_time)) = data_store.get(&key.to_string()) {
+                            if SystemTime::now() > *expiration_time {
+                                data_store.remove(&key.to_string());
+                                let res = format!("{}{}", "$-1", separator);
+                                _stream.write_all(res.as_bytes()).expect("Failed to write response");
+                                continue;
+                            }
 
+                            let res = format!("${}{}{}{}", value.len(), separator, value, separator);
+                            _stream.write_all(res.as_bytes()).expect("Failed to write response");
+                        } else {
+                            let res = format!("{}{}", "$-1", separator);
+                            _stream.write_all(res.as_bytes()).expect("Failed to write response");
+                        }
 
-                        if let Some((value,duration)) = data_store.get(key) {
-                                if Instant::now() > *duration {
-                                    data_store.remove(key);
-                                    let res = format!("{}{}", "$-1", separator);
-                                    println!("get command response: {:?}", res);
-                                    _stream
-                                        .write_all(res.as_bytes())
-                                        .expect("Failed to write response");
-                                    continue;
-                                }
+                        // if let Some((value,duration)) = data_store.get(key) {
+                        //         if Instant::now() > *duration {
+                        //             data_store.remove(key);
+                        //             let res = format!("{}{}", "$-1", separator);
+                        //             println!("get command response: {:?}", res);
+                        //             _stream
+                        //                 .write_all(res.as_bytes())
+                        //                 .expect("Failed to write response");
+                        //             continue;
+                        //         }
 
                                
-                                let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
-                                println!("get command response: {:?}", res);
-                                _stream
-                                    .write_all(res.as_bytes())
-                                    .expect("Failed to write response");
+                        //         let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
+                        //         println!("get command response: {:?}", res);
+                        //         _stream
+                        //             .write_all(res.as_bytes())
+                        //             .expect("Failed to write response");
                             
                             
-                        } else {
-                            let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
-                            println!("get command response: {:?}", res);
-                            _stream
-                                .write_all(res.as_bytes())
-                                .expect("Failed to write response");
-                        }
+                        // } else {
+                        //     let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
+                        //     println!("get command response: {:?}", res);
+                        //     _stream
+                        //         .write_all(res.as_bytes())
+                        //         .expect("Failed to write response");
+                        // }
                         
                     }
 
