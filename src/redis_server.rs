@@ -7,7 +7,7 @@ use std::io::{Read, Write};
 use std::time::Duration;
 use std::time::SystemTime;
 use std::collections::HashMap;
-use redis_protocol::{send_bulk_string,send_simple_string,send_null_bulk_string};
+use redis_protocol::{send_bulk_string,send_simple_string,send_null_bulk_string,send_handshake_ping};
 
 
 pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String, SystemTime)>,is_master :bool ) {
@@ -17,6 +17,9 @@ pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (St
     // read the command from the client
     let mut buffer = [0u8;512];
     let separator = "\r\n";
+    if !is_master {
+        send_handshake_ping(_stream);
+    }
     loop {
         match _stream.read(&mut buffer) {
             Ok(0) => {
@@ -116,7 +119,6 @@ pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (St
                         println!("Undefined command");
                     }
                 }
-                println!("PONG sent");
             }
             Err(e) => {
                 println!("error: {}", e);
