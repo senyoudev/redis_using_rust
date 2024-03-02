@@ -5,6 +5,8 @@ use std::time;
 use std::thread::spawn;
 use std::collections::HashMap;
 use std::time::Duration;
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 
 
@@ -12,7 +14,7 @@ use std::time::Duration;
 
 fn main() {
     // we define a key-value data structure to store and retrieve the items (SET-GET) => we use a hashmap
-    let mut data_store : HashMap<String, (String, Option<time::SystemTime>)> = HashMap::new();    
+    let mut data_store : HashMap<String, (String, Option<time::Duration>,Option<SystemTime>)> = HashMap::new();    
  
     // Create a TCP listener and bind it to the address
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
@@ -37,7 +39,7 @@ fn main() {
 }
 
 
-fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String, Option<time::SystemTime>)>) {
+fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String, Option<Duration>,Option<SystemTime>)>) {
 
     // now we implement a proper redis protocol
 
@@ -81,13 +83,14 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         let key = command_raw_vec[4];
                         let value = command_raw_vec[6];
                         let expiry_index = command_raw_vec.iter().position(|&x| x == "px");
-                        let mut expired_time : Option<time::SystemTime> = None;
+                        let mut expired_time : Option<Duration> = None;
                         if let Some(index) = expiry_index {
                             if let Ok(expiry) = command_raw_vec[index + 1].parse::<u64>() {
-                                expired_time = Some(time::SystemTime::now() + Duration::from_millis(expiry));
+                                expired_time  = Some(Duration::from_millis(expiry));
                             }
                         }
-                        data_store.insert(key.to_string(), (value.to_string(),expired_time));
+                        let set_time = SystemTime::now();
+                        data_store.insert(key.to_string(), (value.to_string(),expired_time,Some(set_time)));
                         let res = format!("{}{}", "+OK", separator); // res is +OK\r\n
                         println!("set command response: {:?}", res);
                         _stream
@@ -100,24 +103,28 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         //check if the key exists in the data store and it is not expired
 
 
-                        if let Some((value,expired_time)) = data_store.get(key) {
-                            let now = time::SystemTime::now();
-                            if expired_time.is_some() && now > expired_time.unwrap() {
-                                data_store.remove(key);
-                                // we should return null bulk string
-                                let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
-                                println!("get command response: {:?}", res);
-                                _stream
-                                    .write_all(res.as_bytes())
-                                    .expect("Failed to write response");
-                                continue;
-                            } else {
+                        if let Some((value,expiry_duration,set_time)) = data_store.get(key) {
+                            if let Some(expiry) = expiry_duration {
+                                if let Some(set_time) = set_time {
+                                    if let Ok(elapsed) = set_time.elapsed() {
+                                        if elapsed > *expiry {
+                                            let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
+                                            println!("get command response: {:?}", res);
+                                            _stream
+                                                .write_all(res.as_bytes())
+                                                .expect("Failed to write response");
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                            
                                 let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
                                  println!("get command response: {:?}", res);
                                 _stream
                                     .write_all(res.as_bytes())
                                     .expect("Failed to write response");
-                            }
+                            
                             
                         } else {
                             let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
