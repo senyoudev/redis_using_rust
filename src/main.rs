@@ -1,3 +1,4 @@
+use std::env;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::io::{Read, Write};
@@ -11,10 +12,22 @@ use std::time::SystemTime;
 
 fn main() {
     // we define a key-value data structure to store and retrieve the items (SET-GET) => we use a hashmap
-    let  data_store : HashMap<String, (String, SystemTime)> = HashMap::new();    
+    let  data_store : HashMap<String, (String, SystemTime)> = HashMap::new();  
+    let args = env::args().collect::<Vec<String>>();
+    let default_port = 6379;
+    let mut port : String = default_port.to_string();
+    if let Some(index) = args.iter().position(|arg| arg == "--port") {
+        if let Some(port_str) = args.get(index + 1) {
+            if let Ok(p) = port_str.parse::<u16>() {
+                port = p.to_string();
+            } else {
+                eprintln!("Invalid port number provided, using default port {}", default_port);
+            }
+        }
+    }
  
     // Create a TCP listener and bind it to the address
-    let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
     
     // Accept incoming connections
     for stream in listener.incoming() {
@@ -97,12 +110,7 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                             data_store.insert(key.to_string(), (value.to_string(), expiration_time));
                            
                        }
-                        println!("The data store is: ");
-                        for (key, (value, expiration_time)) in &data_store {
-                            println!("Key: {}, Value: {}, Expiration Time: {:?}", key, value, expiration_time);
-                        }
                         let res = format!("{}{}", "+OK", separator); // res is +OK\r\n
-                        println!("set command response: {:?}", res);
                         _stream
                             .write_all(res.as_bytes())
                             .expect("Failed to write response");
@@ -111,12 +119,7 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                     "get" => {
                         // the command will be like : *2\r\n$3\r\nget\r\n$3\r\nkey\r\n so the key will be in position 4
                         let key = command_raw_vec[4];
-                        // let's print the whole hashmap
-                        
-                        
-
                         // retrieve the result of the key
-                        println!("the value of the key is {:?}", data_store.get(&key.to_string()));
                         let res = match data_store.get(&key.to_string()) {
                             
                             Some((value, expiration_time)) => {
@@ -130,54 +133,6 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                             None => format!("{}{}", "$-1", separator),
                         };
                         _stream.write_all(res.as_bytes()).expect("Failed to write response");
-                        println!("get command response: {:?}", res);
-
-                        //check if the key exists in the data store and it is not expired
-                        // if let Some((value, expiration_time)) = data_store.get(&key.to_string()) {
-                        //     if SystemTime::now() > *expiration_time {
-                        //         data_store.remove(&key.to_string());
-                        //         let res = format!("{}{}", "$-1", separator);
-                        //         _stream.write_all(res.as_bytes()).expect("Failed to write response");
-                        //         println!("get command response: {:?}", res);
-                        //         continue;
-                        //     } else {
-                        //         let res = format!("${}{}{}{}", value.len(), separator, value, separator);
-                        //         println!("get command response: {:?}", res);
-                        //         _stream.write_all(res.as_bytes()).expect("Failed to write response");
-                        //     }
-
-                        // } else {
-                        //     let res = format!("{}{}", "$-1", separator);
-                        //     _stream.write_all(res.as_bytes()).expect("Failed to write response");
-                        // }
-
-                        // if let Some((value,duration)) = data_store.get(key) {
-                        //         if Instant::now() > *duration {
-                        //             data_store.remove(key);
-                        //             let res = format!("{}{}", "$-1", separator);
-                        //             println!("get command response: {:?}", res);
-                        //             _stream
-                        //                 .write_all(res.as_bytes())
-                        //                 .expect("Failed to write response");
-                        //             continue;
-                        //         }
-
-                               
-                        //         let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
-                        //         println!("get command response: {:?}", res);
-                        //         _stream
-                        //             .write_all(res.as_bytes())
-                        //             .expect("Failed to write response");
-                            
-                            
-                        // } else {
-                        //     let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
-                        //     println!("get command response: {:?}", res);
-                        //     _stream
-                        //         .write_all(res.as_bytes())
-                        //         .expect("Failed to write response");
-                        // }
-                        
                     }
 
                     _ => {

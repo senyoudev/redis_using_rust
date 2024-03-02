@@ -313,4 +313,14 @@ Here's an example of how a client sends a command to the server:
 ```
 
 
+## Redis Replication
 
+### How Redis suppports High availability and failover with Replication ?
+
+Redis follows the leader-follower approach(master-replica). It allows replica Redis to be exact copies of master instances.The replica will automatically reconnect to the master every time the link breaks, and will attempt to be an exact copy of it regardless of what happens to the master.
+
+This system works using three main mechanisms:
+
+- 1 When a master and a replica instances are well-connected, the master keeps the replica updated by sending a stream of commands to the replica to replicate the effects on the dataset happening in the master side due to: client writes, keys expired or evicted, any other action changing the master dataset.
+- 2 When the link between the master and the replica breaks, for network issues or because a timeout is sensed in the master or the replica, the replica reconnects and attempts to proceed with a partial resynchronization: it means that it will try to just obtain the part of the stream of commands it missed during the disconnection.
+- 3 When a partial resynchronization is not possible, the replica will ask for a full resynchronization. This will involve a more complex process in which the master needs to create a snapshot of all its data, send it to the replica, and then continue sending the stream of commands as the dataset changes.
