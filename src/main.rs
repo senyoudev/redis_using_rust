@@ -162,8 +162,9 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                             _stream.write_all(res.as_bytes()).expect("Failed to write response");
                         } else {
                             let res = format!(
-                                "{}{}{}:{}{}{}:{}{}",
+                                "{}{}{}:{}{}{}:{}{}{}{}{}",
                                 "$10", separator, "role", "slave", separator,
+                                "master_replid","8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",separator,
                                 "master_repl_offset", "0", separator
                             );
                             _stream.write_all(res.as_bytes()).expect("Failed to write response");
