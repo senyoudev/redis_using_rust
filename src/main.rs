@@ -6,6 +6,8 @@ use std::thread::spawn;
 use std::collections::HashMap;
 use std::time::Duration;
 use std::time::SystemTime;
+mod redis_protocol;
+use redis_protocol::{send_bulk_string,send_simple_string,send_null_bulk_string};
 
 
 
@@ -80,17 +82,20 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                 // and the first element is "*3" and the second is "$4" and the third is the command
                 match command_to_be_passed {
                     "ping" => {
-                        let res = format!("{}{}", "+PONG", separator); // res is +PONG\r\n
+                        //let res = format!("{}{}", "+PONG", separator); // res is +PONG\r\n
+                        let res = redis_protocol::send_simple_string("PONG");
                         println!("ping command response: {:?}", res);
                         _stream
                             .write_all(res.as_bytes())
                             .expect("Failed to write respnse");
                     }
                     "echo" => {
-                        let res = format!(
-                            "{}{}{}{}",
-                            command_raw_vec[3], separator, command_raw_vec[4], separator
-                        ); // res is raw[3]/r/nraw[4]/r/n which is 5Hello\r\n
+                        // let res = format!(
+                        //     "{}{}{}{}",
+                        //     command_raw_vec[3], separator, command_raw_vec[4], separator
+                        // ); // res is raw[3]/r/nraw[4]/r/n which is 5Hello\r\n
+                       let res = redis_protocol::send_bulk_string(command_raw_vec[3].to_string());
+
                         println!("echo command respnse: {:?}", res);
                         _stream
                             .write_all(res.as_bytes())
@@ -173,6 +178,3 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
 }
 
 
-fn send_bulk_string(response: String) -> String {
-    format!("${}\r\n{}\r\n", response.len(), response)
-}
