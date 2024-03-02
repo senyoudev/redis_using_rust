@@ -82,13 +82,13 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         let expiry_index = command_raw_vec.iter().position(|&x| x == "px");
                         if let Some(index) = expiry_index {
                             println!("The expiry index is: {:?}", index);
-                            println!("The expiry is: {:?}", command_raw_vec[index + 1]);
-                            if let Ok(expiry) = command_raw_vec[index + 1].parse::<u64>() {
-                                println!("The expiry is: {:?}", expiry);
-                                let expiry_duration = Duration::from_millis(expiry);
-                                let expiration_time = SystemTime::now() + expiry_duration;
-                                data_store.insert(key.to_string(), (value.to_string(),expiration_time));
-                            }
+                            println!("The expiry is: {:?}", command_raw_vec[index + 2]);
+                            let expiry = command_raw_vec[index + 2].parse::<u64>().unwrap();
+                            println!("The expiry is: {:?}", expiry);
+                            let expiry_duration = Duration::from_millis(expiry);
+                            let expiration_time = SystemTime::now() + expiry_duration;
+                            data_store.insert(key.to_string(), (value.to_string(),expiration_time));
+                            
                             
                         } 
                         else {
