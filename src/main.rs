@@ -124,7 +124,7 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                             data_store.insert(key.to_string(), (value.to_string(), expiration_time));
                            
                        }
-                        let res = format!("{}{}", "+OK", separator); // res is +OK\r\n
+                        let res = send_simple_string("OK"); // res is +OK\r\n
                         _stream
                             .write_all(res.as_bytes())
                             .expect("Failed to write response");
