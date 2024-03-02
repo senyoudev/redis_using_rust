@@ -17,9 +17,12 @@ pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (St
     // read the command from the client
     let mut buffer = [0u8;512];
     let separator = "\r\n";
+
     if !is_master {
-        send_handshake_ping(_stream);
+        let res = send_handshake_ping();
+        _stream.write_all(res.as_bytes()).expect("Failed to write response");
     }
+    
     loop {
         match _stream.read(&mut buffer) {
             Ok(0) => {
@@ -27,6 +30,7 @@ pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (St
                 break;
             }
             Ok(_) => {
+              
                 // Here the magic should be done
                 let command = String::from_utf8_lossy(&buffer);
                 let command_str = command.to_string();
@@ -114,11 +118,13 @@ pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (St
                         _stream.write_all(response.as_bytes()).expect("Failed to write response");
                     }
                     
+                    
 
                     _ => {
                         println!("Undefined command");
                     }
                 }
+                
             }
             Err(e) => {
                 println!("error: {}", e);
