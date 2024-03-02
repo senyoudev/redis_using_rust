@@ -123,6 +123,7 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                             None => format!("{}{}", "$-1", separator),
                         };
                         _stream.write_all(res.as_bytes()).expect("Failed to write response");
+                        println!("get command response: {:?}", res);
 
                         //check if the key exists in the data store and it is not expired
                         // if let Some((value, expiration_time)) = data_store.get(&key.to_string()) {
