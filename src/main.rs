@@ -44,8 +44,8 @@ fn main() {
             Ok(_stream) => {
                 let data_store_clone = data_store.clone();
                 // Here we should process the stream
-                spawn(|| {
-                    handle_client(_stream, data_store_clone);
+                spawn(move || {
+                    handle_client(_stream, data_store_clone,is_master);
                 });
             }
             // If there is an error, print the error message
@@ -57,7 +57,7 @@ fn main() {
 }
 
 
-fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String, SystemTime)>) {
+fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String, SystemTime)>,is_master :bool ) {
 
     // now we implement a proper redis protocol
 
