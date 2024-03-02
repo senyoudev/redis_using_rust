@@ -107,7 +107,7 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                                 let now = SystemTime::now();
                                 let time_in_which_should_be_expired = set_time.unwrap().duration_since(UNIX_EPOCH).unwrap() + expiry_duration.unwrap();
 
-                                if now.duration_since(UNIX_EPOCH).unwrap() > time_in_which_should_be_expired {
+                                if now.duration_since(UNIX_EPOCH).unwrap() > time_in_which_should_be_expired && Some(time_in_which_should_be_expired) != None {
                                     data_store.remove(key);
                                     let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
                                     println!("get command response: {:?}", res);
@@ -116,8 +116,6 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                                         .expect("Failed to write response");
                                     continue;
                                 }
-                            
-                            
                                 let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
                                  println!("get command response: {:?}", res);
                                 _stream
