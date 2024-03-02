@@ -154,10 +154,13 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         // As a first observation, I think we will find replication in position 3
                         if is_master {
                             let res = format!("$11\r\nrole:master\r\n");
+                            println!("Sent from here and the res is {}",res);
                             _stream.write_all(res.as_bytes()).expect("Failed to write response");
                         } else {
                             let res = format!("$10\r\nrole:slave\r\n");
+                            println!("Sent from here and the res is {}",res);
                             _stream.write_all(res.as_bytes()).expect("Failed to write response");
+                            
                         } 
                         // if let Some(section) = command_raw_vec.get(3) {
                         //     if *section == "replication" {
