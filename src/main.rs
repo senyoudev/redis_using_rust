@@ -56,8 +56,10 @@ fn main() {
                 let stream_clone = _stream.try_clone().expect("Failed to clone stream");
                 // Here we should process the stream
                 spawn(move || {
-                    handle_client(_stream, data_store_clone, is_master);
-                    handle_replica(stream_clone, is_master);
+                    handle_client(_stream, data_store_clone, is_master)
+                });
+                spawn(move || {
+                    handle_replica(stream_clone, is_master)
                 });
             }
             // If there is an error, print the error message
