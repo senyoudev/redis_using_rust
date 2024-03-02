@@ -104,18 +104,21 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                             let now = time::SystemTime::now();
                             if expired_time.is_some() && now > expired_time.unwrap() {
                                 data_store.remove(key);
+                                // we should return null bulk string
                                 let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
                                 println!("get command response: {:?}", res);
                                 _stream
                                     .write_all(res.as_bytes())
                                     .expect("Failed to write response");
                                 continue;
+                            } else {
+                                let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
+                                 println!("get command response: {:?}", res);
+                                _stream
+                                    .write_all(res.as_bytes())
+                                    .expect("Failed to write response");
                             }
-                            let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
-                            println!("get command response: {:?}", res);
-                            _stream
-                                .write_all(res.as_bytes())
-                                .expect("Failed to write response");
+                            
                         } else {
                             let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
                             println!("get command response: {:?}", res);
