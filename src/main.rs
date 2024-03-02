@@ -94,7 +94,7 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         //     "{}{}{}{}",
                         //     command_raw_vec[3], separator, command_raw_vec[4], separator
                         // ); // res is raw[3]/r/nraw[4]/r/n which is 5Hello\r\n
-                       let res = redis_protocol::send_bulk_string(command_raw_vec[3].to_string());
+                       let res = redis_protocol::send_bulk_string(command_raw_vec[4].to_string());
 
                         println!("echo command respnse: {:?}", res);
                         _stream
