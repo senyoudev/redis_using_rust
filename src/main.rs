@@ -23,7 +23,7 @@ fn main() {
     let mut is_master = true;
 
     if let Some(index) = args.iter().position(|arg| arg == "--replicaof") {
-        is_master = true; // since it's replicaof, then it won't be the master
+        is_master = false; // since it's replicaof, then it won't be the master
         if let Some(host) = args.get(index + 1) {
             master_host = host.to_string();
         }
@@ -153,7 +153,7 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                     "info" => {
                         // As a first observation, I think we will find replication in position 3
                         if is_master {
-                            let res = format!("{}{}{}{}","$11",separator,"role:slave",separator);
+                            let res = format!("{}{}{}{}","$11",separator,"role:master",separator);
                             println!("Sent from here and the res is {}",res);
                             _stream.write_all(res.as_bytes()).expect("Failed to write response");
                         } else {
