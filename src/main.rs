@@ -110,8 +110,9 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         let key = command_raw_vec[4];
 
                         // retrieve the result of the key
-
+                        println!("the value of the key is {:?}", data_store.get(&key.to_string()));
                         let res = match data_store.get(&key.to_string()) {
+                            
                             Some((value, expiration_time)) => {
                                 if SystemTime::now() > *expiration_time {
                                     data_store.remove(&key.to_string());
