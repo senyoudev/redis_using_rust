@@ -144,25 +144,16 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                         _stream.write_all(res.as_bytes()).expect("Failed to write response");
                     }
                     "info" => {
-                        if is_master {
-                            let res = format!(
-                                "{}{}{}:{}{}{}:{}{}{}{}{}",
-                                "$11", separator, "role", "master", separator,
-                                "master_replid", "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb", separator,
-                                "master_repl_offset", "0", separator
-                            );
-                            println!("master response {}",res);
-                            _stream.write_all(res.as_bytes()).expect("Failed to write response");
-                        } else {
-                            let res = format!(
-                                "{}{}{}:{}{}{}:{}{}{}{}{}",
-                                "$10", separator, "role", "slave", separator,
-                                "master_replid","8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",separator,
-                                "master_repl_offset", "0", separator
-                            );
-                            println!("replica response {}",res);
-                            _stream.write_all(res.as_bytes()).expect("Failed to write response");
-                        } 
+                        let role = if is_master { "master" } else { "slave" };
+                        let response = send_bulk_string(
+                            [
+                                format!("role:{}", role),
+                                "master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb".to_string(),
+                                "master_repl_offset:0".to_string(),
+                            ]
+                            .join("\r\n"),
+                        );
+                        _stream.write_all(response.as_bytes()).expect("Failed to write response");
                     }
                     
 
@@ -182,4 +173,6 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
 }
 
 
-
+fn send_bulk_string(response: String) -> String {
+    format!("${}\r\n{}\r\n", response.len(), response)
+}
