@@ -16,20 +16,13 @@ fn main() {
     let args = env::args().collect::<Vec<String>>();
     let default_port = 6379;
     let mut port : String = default_port.to_string();
-    let mut master_host = String::new();
-    let mut master_port = String::new();
+
 
     // master & slave part
     let mut is_master = true;
 
     if let Some(index) = args.iter().position(|arg| arg == "--replicaof") {
         is_master = false; // since it's replicaof, then it won't be the master
-        if let Some(host) = args.get(index + 1) {
-            master_host = host.to_string();
-        }
-        if let Some(port) = args.get(index + 2) {
-            master_port = port.to_string();
-        }
     }
 
     if let Some(index) = args.iter().position(|arg| arg == "--port") {
