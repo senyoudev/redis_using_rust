@@ -16,6 +16,14 @@ fn main() {
     let args = env::args().collect::<Vec<String>>();
     let default_port = 6379;
     let mut port : String = default_port.to_string();
+
+    // master & slave part
+    let mut is_master = true;
+
+    if let Some(index) = args.iter().position(|arg| arg == "--replicaof") {
+        is_master = true; // since it's replicaof, then it won't be the master
+    }
+
     if let Some(index) = args.iter().position(|arg| arg == "--port") {
         if let Some(port_str) = args.get(index + 1) {
             if let Ok(p) = port_str.parse::<u16>() {
@@ -136,11 +144,13 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                     }
                     "info" => {
                         // As a first observation, I think we will find replication in position 3
+                        if is_master {
                             let res = format!("$11\r\nrole:master\r\n");
-                            _stream
-                                .write_all(res.as_bytes())
-                                .expect("Failed to write response");
-                            println!("Response sent for replication {}", res);
+                            _stream.write_all(res.as_bytes()).expect("Failed to write response");
+                        } else {
+                            let res = format!("$10\r\nrole:slave\r\n");
+                            _stream.write_all(res.as_bytes()).expect("Failed to write response");
+                        } 
                         // if let Some(section) = command_raw_vec.get(3) {
                         //     if *section == "replication" {
                         //         let res = format!("$11\r\nrole:master\r\n");
