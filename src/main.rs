@@ -104,20 +104,19 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
 
 
                         if let Some((value,expiry_duration,set_time)) = data_store.get(key) {
-                            if let Some(expiry) = expiry_duration {
-                                if let Some(set_time) = set_time {
-                                    if let Ok(elapsed) = set_time.elapsed() {
-                                        if elapsed > *expiry {
-                                            let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
-                                            println!("get command response: {:?}", res);
-                                            _stream
-                                                .write_all(res.as_bytes())
-                                                .expect("Failed to write response");
-                                            continue;
-                                        }
-                                    }
+                                let now = SystemTime::now();
+                                let time_in_which_should_be_expired = set_time.unwrap().duration_since(UNIX_EPOCH).unwrap() + expiry_duration.unwrap();
+
+                                if now.duration_since(UNIX_EPOCH).unwrap() > time_in_which_should_be_expired {
+                                    data_store.remove(key);
+                                    let res = format!("{}{}", "$-1", separator); // res is $-1\r\n
+                                    println!("get command response: {:?}", res);
+                                    _stream
+                                        .write_all(res.as_bytes())
+                                        .expect("Failed to write response");
+                                    continue;
                                 }
-                            }
+                            
                             
                                 let res = format!("${}{}{}{}", value.len(), separator, value, separator); // res is $5\r\nvalue\r\n
                                  println!("get command response: {:?}", res);
