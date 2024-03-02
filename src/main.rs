@@ -108,24 +108,39 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                     "get" => {
                         // the command will be like : *2\r\n$3\r\nget\r\n$3\r\nkey\r\n so the key will be in position 4
                         let key = command_raw_vec[4];
-                        //check if the key exists in the data store and it is not expired
-                        if let Some((value, expiration_time)) = data_store.get(&key.to_string()) {
-                            if SystemTime::now() > *expiration_time {
-                                data_store.remove(&key.to_string());
-                                let res = format!("{}{}", "$-1", separator);
-                                _stream.write_all(res.as_bytes()).expect("Failed to write response");
-                                println!("get command response: {:?}", res);
-                                continue;
-                            } else {
-                                let res = format!("${}{}{}{}", value.len(), separator, value, separator);
-                                println!("get command response: {:?}", res);
-                                _stream.write_all(res.as_bytes()).expect("Failed to write response");
-                            }
 
-                        } else {
-                            let res = format!("{}{}", "$-1", separator);
-                            _stream.write_all(res.as_bytes()).expect("Failed to write response");
-                        }
+                        // retrieve the result of the key
+
+                        let res = match data_store.get(&key.to_string()) {
+                            Some((value, expiration_time)) => {
+                                if SystemTime::now() > *expiration_time {
+                                    data_store.remove(&key.to_string());
+                                    format!("{}{}", "$-1", separator)
+                                } else {
+                                    format!("${}{}{}{}", value.len(), separator, value, separator)
+                                }
+                            }
+                            None => format!("{}{}", "$-1", separator),
+                        };
+
+                        //check if the key exists in the data store and it is not expired
+                        // if let Some((value, expiration_time)) = data_store.get(&key.to_string()) {
+                        //     if SystemTime::now() > *expiration_time {
+                        //         data_store.remove(&key.to_string());
+                        //         let res = format!("{}{}", "$-1", separator);
+                        //         _stream.write_all(res.as_bytes()).expect("Failed to write response");
+                        //         println!("get command response: {:?}", res);
+                        //         continue;
+                        //     } else {
+                        //         let res = format!("${}{}{}{}", value.len(), separator, value, separator);
+                        //         println!("get command response: {:?}", res);
+                        //         _stream.write_all(res.as_bytes()).expect("Failed to write response");
+                        //     }
+
+                        // } else {
+                        //     let res = format!("{}{}", "$-1", separator);
+                        //     _stream.write_all(res.as_bytes()).expect("Failed to write response");
+                        // }
 
                         // if let Some((value,duration)) = data_store.get(key) {
                         //         if Instant::now() > *duration {
