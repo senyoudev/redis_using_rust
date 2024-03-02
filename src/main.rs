@@ -92,11 +92,12 @@ fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String
                                 data_store.insert(key.to_string(), (value.to_string(),expiration_time));
 
                             }
-                        } else {
-                             // No expiry provided, set expiration to max
-                            let expiration_time = SystemTime::UNIX_EPOCH + Duration::from_secs(u64::MAX);
-                            data_store.insert(key.to_string(), (value.to_string(), expiration_time));
-                        }
+                            else {
+                                // No expiry provided, set expiration to max
+                               let expiration_time = SystemTime::UNIX_EPOCH + Duration::from_secs(u64::MAX);
+                               data_store.insert(key.to_string(), (value.to_string(), expiration_time));
+                           }
+                        } 
                         let res = format!("{}{}", "+OK", separator); // res is +OK\r\n
                         println!("set command response: {:?}", res);
                         _stream
