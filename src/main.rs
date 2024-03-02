@@ -1,5 +1,6 @@
 mod redis_protocol;
 mod redis_server;
+mod redis_replica;
 use std::env;
 use std::io::Write;
 use std::net::TcpListener;
@@ -7,6 +8,7 @@ use std::net::TcpListener;
 use std::thread::spawn;
 use std::collections::HashMap;
 use std::time::SystemTime;
+use redis_replica::handle_replica;
 use redis_server::handle_client;
 use tokio::stream;
 
@@ -28,9 +30,6 @@ fn main() {
 
     if let Some(index) = args.iter().position(|arg| arg == "--replicaof") {
         is_master = false; // since it's replicaof, then it won't be the master
-        if !is_master {
-            print!("I am a slave and should do the handshake with the master");
-        }
         
     }
 
@@ -53,11 +52,12 @@ fn main() {
             
             // If everything goes well, print the below message
             Ok(mut _stream) => {
-               
                 let data_store_clone = data_store.clone();
+                let stream_clone = _stream.try_clone().expect("Failed to clone stream");
                 // Here we should process the stream
                 spawn(move || {
-                    handle_client(_stream, data_store_clone,is_master);
+                    handle_client(_stream, data_store_clone, is_master);
+                    handle_replica(stream_clone, is_master);
                 });
             }
             // If there is an error, print the error message
