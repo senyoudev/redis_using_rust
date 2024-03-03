@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::net::{SocketAddr, SocketAddrV4};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufStream};
 use tokio::net::TcpStream;
 
@@ -8,7 +8,7 @@ pub struct Client {
 
 impl Client {
     /// Create a new client.
-    pub async fn connect(uri: SocketAddr) -> Self {
+    pub async fn connect(uri: SocketAddrV4) -> Self {
         let stream = TcpStream::connect(uri).await.unwrap();
         Self {
             stream: BufStream::new(stream),

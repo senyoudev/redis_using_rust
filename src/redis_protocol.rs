@@ -1,6 +1,6 @@
 use crate::redis_replica::Client;
 use std::{fmt::format, io::Write, net::TcpStream};
-use std::net::SocketAddr;
+use std::net::{SocketAddr, SocketAddrV4};
 
 
 
@@ -19,7 +19,7 @@ pub fn send_null_bulk_string() -> String {
 
 
 /// Handshake routine.
-pub async fn handshake(master: SocketAddr) {
+pub async fn handshake(master: SocketAddrV4) {
     let mut cli = Client::connect(master).await;
     // Step 1: PING master.
     assert_eq!(
