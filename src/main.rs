@@ -8,7 +8,7 @@ use std::net::{SocketAddr, TcpListener,IpAddr, Ipv4Addr};
 use std::thread::spawn;
 use std::collections::HashMap;
 use std::time::SystemTime;
-use redis_protocol::handshake;
+use redis_protocol::{handshake};
 use redis_server::handle_client;
 
 
@@ -64,6 +64,11 @@ async fn main() {
                 spawn(move || {
                     handle_client(_stream, data_store_clone, is_master)
                 });
+
+                if !is_master {
+                    let master_addr = SocketAddr::new("127.0.0.1".parse().unwrap(), master_port);
+                    handshake(master_addr).await;
+                }
 
                
                
