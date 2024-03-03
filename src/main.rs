@@ -2,7 +2,8 @@ mod redis_protocol;
 mod redis_server;
 mod redis_replica;
 use std::env;
-use std::net::{SocketAddr, TcpListener};
+use std::net::{SocketAddr, TcpListener,IpAddr, Ipv4Addr};
+
 
 use std::thread::spawn;
 use std::collections::HashMap;
@@ -20,6 +21,8 @@ async fn main() {
     let args = env::args().collect::<Vec<String>>();
     let default_port = 6379;
     let mut port : String = default_port.to_string();
+    let mut master_port : u16 = default_port;
+    let mut master_host : String = String::new();
 
 
     // master & slave part
@@ -27,7 +30,12 @@ async fn main() {
 
     if let Some(index) = args.iter().position(|arg| arg == "--replicaof") {
         is_master = false; // since it's replicaof, then it won't be the master
-        
+        if !is_master {
+            master_port = args.get(index + 2).unwrap().parse::<u16>().unwrap();
+            master_host = args.get(index + 1).unwrap().to_string();
+        } else {
+            println!("Invalid replicaof command, using default port {}", default_port);
+        }
         
     }
 
@@ -58,7 +66,7 @@ async fn main() {
                 });
 
                 if !is_master {
-                    handshake(SocketAddr::from(([127, 0, 0, 1],6379))).await;
+                    handshake(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), master_port)).await;
                  }
                
             }
