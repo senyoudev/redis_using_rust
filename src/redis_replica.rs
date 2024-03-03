@@ -34,6 +34,7 @@ impl Client {
         // Wait for the response.
         let mut buffer = vec![0; 512]; // Adjust the buffer size as needed
         self.stream.read_exact(&mut buffer).await?;
+        println!("Received: {:?}", String::from_utf8_lossy(&buffer));
         Ok(String::from_utf8_lossy(&buffer).to_string())
     }
 }
