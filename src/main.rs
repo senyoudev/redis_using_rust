@@ -2,22 +2,19 @@ mod redis_protocol;
 mod redis_server;
 mod redis_replica;
 use std::env;
-use std::io::Write;
-use std::net::TcpListener;
+use std::net::{SocketAddr, TcpListener};
 
 use std::thread::spawn;
 use std::collections::HashMap;
 use std::time::SystemTime;
-use redis_replica::handle_replica;
+use redis_protocol::handshake;
 use redis_server::handle_client;
-use tokio::stream;
-
-use crate::redis_protocol::send_handshake_ping;
 
 
 
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // we define a key-value data structure to store and retrieve the items (SET-GET) => we use a hashmap
     let  data_store : HashMap<String, (String, SystemTime)> = HashMap::new();  
     let args = env::args().collect::<Vec<String>>();
@@ -30,6 +27,9 @@ fn main() {
 
     if let Some(index) = args.iter().position(|arg| arg == "--replicaof") {
         is_master = false; // since it's replicaof, then it won't be the master
+        if !is_master {
+           handshake(SocketAddr::from(([127, 0, 0, 1], 6379))).await;
+        }
         
     }
 
@@ -58,9 +58,7 @@ fn main() {
                 spawn(move || {
                     handle_client(_stream, data_store_clone, is_master)
                 });
-                spawn(move || {
-                    handle_replica(stream_clone, is_master)
-                });
+               
             }
             // If there is an error, print the error message
             Err(e) => {

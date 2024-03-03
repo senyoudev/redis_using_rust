@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use std::time::Duration;
 use std::time::SystemTime;
 use std::collections::HashMap;
-use redis_protocol::{send_bulk_string,send_simple_string,send_null_bulk_string,send_handshake_ping};
+use redis_protocol::{send_bulk_string,send_simple_string,send_null_bulk_string};
 
 
 pub fn handle_client(mut _stream: TcpStream, mut data_store: HashMap<String, (String, SystemTime)>,is_master :bool ) {
