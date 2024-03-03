@@ -20,7 +20,8 @@ pub fn send_null_bulk_string() -> String {
 /// Handshake routine.
 pub async fn handshake(master: SocketAddr) {
     let mut cli = Client::connect(master).await;
+    println!("Connected to master at {}", master);
     // Step 1: PING master.
-        cli.exec("PING", &[]).await.expect("Failed to PING master");
+    cli.exec("PING", &[]).await.expect("Failed to PING master");
 }
 
