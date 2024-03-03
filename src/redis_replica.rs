@@ -9,7 +9,7 @@ pub struct Client {
 impl Client {
     /// Create a new client.
     pub async fn connect(uri: SocketAddr) -> Self {
-        let stream = TcpStream::connect(uri).await.unwrap();
+        let stream = TcpStream::connect(uri).await.expect("Failed to connect to master");
         Self {
             stream: BufStream::new(stream),
         }
