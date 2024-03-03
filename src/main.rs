@@ -2,7 +2,7 @@ mod redis_protocol;
 mod redis_server;
 mod redis_replica;
 use std::env;
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, TcpListener};
+use std::net::{SocketAddr, TcpListener};
 
 use std::thread::spawn;
 use std::collections::HashMap;
@@ -27,10 +27,8 @@ async fn main() {
 
     if let Some(index) = args.iter().position(|arg| arg == "--replicaof") {
         is_master = false; // since it's replicaof, then it won't be the master
-        if !is_master {
-            let socket_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port.parse::<u16>().unwrap());
-            handshake(socket_addr).await;
-        }
+        
+        
     }
 
     if let Some(index) = args.iter().position(|arg| arg == "--port") {
@@ -58,6 +56,10 @@ async fn main() {
                 spawn(move || {
                     handle_client(_stream, data_store_clone, is_master)
                 });
+
+                if !is_master {
+                    handshake(SocketAddr::from(([127, 0, 0, 1],6379))).await;
+                 }
                
             }
             // If there is an error, print the error message
