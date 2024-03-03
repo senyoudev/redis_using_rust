@@ -22,7 +22,6 @@ async fn main() {
     let default_port = 6379;
     let mut port : String = default_port.to_string();
     let mut master_port : u16 = default_port;
-    let mut master_host : String = String::new();
 
 
     // master & slave part
@@ -32,7 +31,6 @@ async fn main() {
         is_master = false; // since it's replicaof, then it won't be the master
         if !is_master {
             master_port = args.get(index + 2).unwrap().parse::<u16>().unwrap();
-            master_host = args.get(index + 1).unwrap().to_string();
         } else {
             println!("Invalid replicaof command, using default port {}", default_port);
         }
@@ -48,6 +46,9 @@ async fn main() {
             }
         }
     }
+    if !is_master {
+        handshake(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), master_port)).await;
+     }
  
     // Create a TCP listener and bind it to the address
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
@@ -59,15 +60,12 @@ async fn main() {
             // If everything goes well, print the below message
             Ok(mut _stream) => {
                 let data_store_clone = data_store.clone();
-                let stream_clone = _stream.try_clone().expect("Failed to clone stream");
                 // Here we should process the stream
                 spawn(move || {
                     handle_client(_stream, data_store_clone, is_master)
                 });
 
-                if !is_master {
-                    handshake(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), master_port)).await;
-                 }
+               
                
             }
             // If there is an error, print the error message
