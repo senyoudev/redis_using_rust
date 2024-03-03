@@ -21,6 +21,6 @@ pub fn send_null_bulk_string() -> String {
 pub async fn handshake(master: SocketAddr) {
     let mut cli = Client::connect(master).await;
     // Step 1: PING master.
-        cli.exec("PING", &[]).await.unwrap();
+        cli.exec("PING", &[]).await.expect("Failed to PING master");
 }
 
