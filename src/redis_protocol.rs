@@ -22,6 +22,6 @@ pub async fn handshake(master: SocketAddr) {
     let mut cli = Client::connect(master).await;
     // Step 1: PING master.
     
-        send_simple_string("PONG")
-    ;
+        send_simple_string("*1\r\n$4\r\nping\r\n")
+;
 }
