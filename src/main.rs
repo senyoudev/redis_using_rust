@@ -46,9 +46,9 @@ async fn main() {
             }
         }
     }
-    if !is_master {
-        handshake(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), master_port)).await;
-     }
+    // if !is_master {
+    //     handshake(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), master_port)).await;
+    //  }
  
     // Create a TCP listener and bind it to the address
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
