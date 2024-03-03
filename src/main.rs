@@ -31,6 +31,7 @@ async fn main() {
         is_master = false; // since it's replicaof, then it won't be the master
         if !is_master {
             master_port = args.get(index + 2).unwrap().parse::<u16>().unwrap();
+            port = args.get(index + 2).unwrap().to_string();
         } else {
             println!("Invalid replicaof command, using default port {}", default_port);
         }
